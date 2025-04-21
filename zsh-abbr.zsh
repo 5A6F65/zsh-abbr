@@ -1532,11 +1532,10 @@ abbr-expand() {
 
   local expansion
   local abbreviation
-  local -i i
-  local -i j
+  local abbr
   local -i matched_full_buffer
   local -i ret
-  local -a words
+  local -i pos
 
   ABBR_UNUSED_ABBREVIATION=
   ABBR_UNUSED_ABBREVIATION_EXPANSION=
@@ -1545,7 +1544,6 @@ abbr-expand() {
   ABBR_UNUSED_ABBREVIATION_TYPE=
 
   abbreviation=$LBUFFER
-  i=1
 
   expansion=$(_abbr_regular_expansion "$abbreviation")
 
@@ -1565,27 +1563,31 @@ abbr-expand() {
     # END DUPE abbr-expand 2x with differences
   fi
 
-  words=( ${(z)LBUFFER} )
-  # first check the full LBUFFER, then trim words off the front
-  while [[ -z $expansion ]] && (( i < ${#words} )); do
-    abbreviation=${words:$i}
-    expansion=$(_abbr_global_expansion "$abbreviation" 1)
-    (( i++ ))
-  done
+  expansion=$(_abbr_global_expansion "$abbreviation" 1)
+  if [[ -z $expansion ]]; then
+    for abbr in ${(k)ABBR_GLOBAL_SESSION_ABBREVIATIONS}; do
+      pos=${abbreviation[(I) ${(Q)abbr}]}
+      if (( $pos )) && ! (( $pos + ${#${(Q)abbr}} - ${#abbreviation} )); then
+        abbreviation=${(Q)abbr}
+        expansion=${(Q)ABBR_GLOBAL_SESSION_ABBREVIATIONS[$abbr]}
+      fi
+    done
+  fi
 
   if [[ -z $expansion ]]; then
-    i=0
-    words=( ${(z)LBUFFER} )
-
     _abbr_create_files
     source ${_abbr_tmpdir}global-user-abbreviations
 
-    # first check the full LBUFFER, then trim words off the front
-    while [[ -z $expansion ]] && (( i < ${#words} )); do
-      abbreviation=${words:$i}
-      expansion=$(_abbr_global_expansion "$abbreviation" 0)
-      (( i++ ))
-    done
+    expansion=$(_abbr_global_expansion "$abbreviation" 0)
+    if [[ -z $expansion ]]; then
+      for abbr in ${(k)ABBR_GLOBAL_USER_ABBREVIATIONS}; do
+        pos=${abbreviation[(I) ${(Q)abbr}]}
+        if (( $pos )) && ! (( $pos + ${#${(Q)abbr}} - ${#abbreviation} )); then
+          abbreviation=${(Q)abbr}
+          expansion=${(Q)ABBR_GLOBAL_USER_ABBREVIATIONS[$abbr]}
+        fi
+      done
+    fi
   fi
 
   if [[ -z $expansion ]]; then
