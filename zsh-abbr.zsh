@@ -337,6 +337,7 @@ abbr() {
 
       local abbreviation
       local expansion
+      local -a reply
 
       if ! (( $# )); then
         _abbr:util_error "_abbr:expansion requires an argument"
@@ -347,14 +348,20 @@ abbr() {
 
       expansion=$(_abbr_regular_expansion "$abbreviation")
 
-      if [[ ! "$expansion" ]]; then
-        expansion=$(_abbr_global_expansion "$abbreviation" 1)
+      if [[ -z $expansion ]]; then
+        if _abbr_global_expansion "$abbreviation" 1; then
+          expansion=$reply[1]
+          abbreviation=$reply[2]
+        fi
       fi
 
-      if [[ ! "$expansion" ]]; then
+      if [[ -z $expansion ]]; then
         _abbr_create_files
         source ${_abbr_tmpdir}global-user-abbreviations
-        expansion=$(_abbr_global_expansion "$abbreviation" 0)
+        if _abbr_global_expansion "$abbreviation" 0; then
+          expansion=$reply[1]
+          abbreviation=$reply[2]
+        fi
       fi
 
       'builtin' 'echo' - $expansion
@@ -1256,7 +1263,11 @@ _abbr_global_expansion() {
 
   local abbreviation
   local expansion
+  local snippet
   local -i session
+  local -i length
+  local -i i
+  local -a words
 
   abbreviation=$1
   session=$2
@@ -1265,13 +1276,22 @@ _abbr_global_expansion() {
   # do not expand empty string or all-whitespace string
   [[ -n ${(z)abbreviation} ]] || return
 
-  if (( session )); then
-    expansion=${ABBR_GLOBAL_SESSION_ABBREVIATIONS[${(qqq)abbreviation}]}
-  else
-    expansion=${ABBR_GLOBAL_USER_ABBREVIATIONS[${(qqq)abbreviation}]}
-  fi
-
-  'builtin' 'echo' - ${(Q)expansion}
+  words=("${(@s: :)abbreviation}")
+  length=${#words[@]}
+  for (( i = 1; i <= $length; i++ )); do
+    snippet=${(j: :)words[$i,$length]}
+    if (( session )); then
+      expansion=${ABBR_GLOBAL_SESSION_ABBREVIATIONS[${(qqq)snippet}]}
+    else
+      expansion=${ABBR_GLOBAL_USER_ABBREVIATIONS[${(qqq)snippet}]}
+    fi
+    if [[ -n $expansion ]]; then
+      reply[1]=${(Q)expansion}
+      reply[2]=$snippet
+      return 0
+    fi
+  done
+  return 1
 }
 
 _abbr_load_user_abbreviations() {
@@ -1532,10 +1552,8 @@ abbr-expand() {
 
   local expansion
   local abbreviation
-  local abbr
-  local -i matched_full_buffer
   local -i ret
-  local -i pos
+  local -a reply
 
   ABBR_UNUSED_ABBREVIATION=
   ABBR_UNUSED_ABBREVIATION_EXPANSION=
@@ -1563,30 +1581,17 @@ abbr-expand() {
     # END DUPE abbr-expand 2x with differences
   fi
 
-  expansion=$(_abbr_global_expansion "$abbreviation" 1)
-  if [[ -z $expansion ]]; then
-    for abbr in ${(k)ABBR_GLOBAL_SESSION_ABBREVIATIONS}; do
-      pos=${abbreviation[(I) ${(Q)abbr}]}
-      if (( $pos )) && ! (( $pos + ${#${(Q)abbr}} - ${#abbreviation} )); then
-        abbreviation=${(Q)abbr}
-        expansion=${(Q)ABBR_GLOBAL_SESSION_ABBREVIATIONS[$abbr]}
-      fi
-    done
+  if _abbr_global_expansion "$abbreviation" 1; then
+    expansion=$reply[1]
+    abbreviation=$reply[2]
   fi
 
   if [[ -z $expansion ]]; then
     _abbr_create_files
     source ${_abbr_tmpdir}global-user-abbreviations
-
-    expansion=$(_abbr_global_expansion "$abbreviation" 0)
-    if [[ -z $expansion ]]; then
-      for abbr in ${(k)ABBR_GLOBAL_USER_ABBREVIATIONS}; do
-        pos=${abbreviation[(I) ${(Q)abbr}]}
-        if (( $pos )) && ! (( $pos + ${#${(Q)abbr}} - ${#abbreviation} )); then
-          abbreviation=${(Q)abbr}
-          expansion=${(Q)ABBR_GLOBAL_USER_ABBREVIATIONS[$abbr]}
-        fi
-      done
+    if _abbr_global_expansion "$abbreviation" 0; then
+      expansion=$reply[1]
+      abbreviation=$reply[2]
     fi
   fi
 
