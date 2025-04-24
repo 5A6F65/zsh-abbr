@@ -8,6 +8,12 @@ main() {
 			emulate -LR zsh
 
 			abbr erase $test_abbr_abbreviation
+			abbr erase $test_abbr_single_quotes
+			abbr erase $test_abbr_double_quotes
+			abbr erase $test_abbr_unpaired_quotes
+			abbr erase $test_abbr_leading_space
+			abbr erase $test_abbr_trailing_space
+			abbr erase $test_abbr_leading_and_trailing_space
 		}
 
 		abbr add $test_abbr_abbreviation=$test_abbr_expansion
@@ -131,6 +137,41 @@ main() {
 			"Can expand a three-word abbreviation in a script" \
 			"Dependencies: erase"
 		abbr erase "a b c"
+
+		abbr -g $test_abbr_abbreviation=$test_abbr_expansion
+		ztr test '[[ $(abbr expand "$prefix_for_global_test $test_abbr_abbreviation") == $test_abbr_expansion ]]' \
+			"Can expand a global abbreviation when is preceded by other text in a script" \
+			"Dependencies: erase"
+
+		abbr -g $test_abbr_single_quotes=$test_abbr_expansion
+		ztr test '[[ $(abbr expand "$prefix_for_global_test $test_abbr_single_quotes") == $test_abbr_expansion ]]' \
+			"Can expand a global abbreviation with single quotes when is preceded by other text in a script" \
+			"Dependencies: erase"
+
+		abbr -g $test_abbr_double_quotes=$test_abbr_expansion
+		ztr test '[[ $(abbr expand "$prefix_for_global_test $test_abbr_double_quotes") == $test_abbr_expansion ]]' \
+			"Can expand a global abbreviation with double quotes when is preceded by other text in a script" \
+			"Dependencies: erase"
+
+		abbr -g $test_abbr_unpaired_quotes=$test_abbr_expansion
+		ztr test '[[ $(abbr expand "$prefix_for_global_test $test_abbr_unpaired_quotes") == $test_abbr_expansion ]]' \
+			"Can expand a global abbreviation with unpaired quotes when is preceded by other text in a script" \
+			"Dependencies: erase"
+
+		abbr -g $test_abbr_leading_space=$test_abbr_expansion
+		ztr test '[[ $(abbr expand "$prefix_for_global_test $test_abbr_leading_space") == $test_abbr_expansion ]]' \
+			"Can expand a global abbreviation with leading space when is preceded by other text in a script" \
+			"Dependencies: erase"
+
+		abbr -g $test_abbr_trailing_space=$test_abbr_expansion
+		ztr test '[[ $(abbr expand "$prefix_for_global_test $test_abbr_trailing_space") == $test_abbr_expansion ]]' \
+			"Can expand a global abbreviation with trailing space when is preceded by other text in a script" \
+			"Dependencies: erase"
+
+		abbr -g $test_abbr_leading_and_trailing_space=$test_abbr_expansion
+		ztr test '[[ $(abbr expand "$prefix_for_global_test $test_abbr_leading_and_trailing_space") == $test_abbr_expansion ]]' \
+			"Can expand a global abbreviation with leading space and trailing space when is preceded by other text in a script" \
+			"Dependencies: erase"
 	} always {
 		unfunction -m ZTR_TEARDOWN_FN
 	}

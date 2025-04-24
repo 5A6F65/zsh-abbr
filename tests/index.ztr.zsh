@@ -20,7 +20,7 @@ main() {
 	emulate -LR zsh
 
 	typeset -g ABBR_USER_ABBREVIATIONS_FILE_SAVED
-	
+
 	local \
 		abbr_dir \
 		abbr_expansion_cursor_marker_saved \
@@ -36,10 +36,17 @@ main() {
 		prefix_multi_word \
 		prefix_one_word \
 		prefix_single_quotes \
+		prefix_for_global_test \
 		test_abbr_abbreviation \
 		test_abbr_abbreviation_2 \
 		test_abbr_abbreviation_multiword \
 		test_abbr_abbreviation_multiword_2 \
+		test_abbr_single_quote \
+		test_abbr_double_quotes \
+		test_abbr_unpaired_quotes \
+		test_abbr_leading_space \
+		test_abbr_trailing_space \
+		test_abbr_leading_and_trailing_space \
 		test_abbr_expansion \
 		test_abbr_expansion_2 \
 		test_dir \
@@ -48,7 +55,7 @@ main() {
 
 	local -a abbr_scalar_prefixes_saved
 	local -a abbr_glob_prefixes_saved
-	
+
 	local -i abbr_quiet_saved
 
 	ztr_path=${ztr_path:-$ZTR_PATH}
@@ -77,6 +84,8 @@ main() {
 	prefix_glob_1_mismatch='globprefix1'
 	prefix_glob_2_match='.globprefix2'
 
+	prefix_for_global_test="prefix for global test"
+
 	test_dir=$abbr_dir/tests
 
 	if [[ ${(%):-%#} == '#' ]]; then
@@ -98,7 +107,7 @@ main() {
 	# Configure
 	unset ABBR_EXPANSION_CURSOR_MARKER
 	unset ABBR_LINE_CURSOR_MARKER
-	
+
 	typeset -a ABBR_REGULAR_ABBREVIATION_SCALAR_PREFIXES=( )
 	ABBR_REGULAR_ABBREVIATION_SCALAR_PREFIXES+=( $prefix_double_quotes )
 	ABBR_REGULAR_ABBREVIATION_SCALAR_PREFIXES+=( $prefix_multi_word )
@@ -120,6 +129,12 @@ main() {
 	test_abbr_abbreviation_2="zsh_abbr_test_2"
 	test_abbr_abbreviation_multiword="zsh_abbr_test second_word"
 	test_abbr_abbreviation_multiword_2="zsh_abbr_test other_second_word"
+	test_abbr_single_quotes="zsh_abbr_test 'single quotes'"
+	test_abbr_double_quotes="zsh_abbr_test \"double quotes\""
+	test_abbr_unpaired_quotes="zsh_abbr_test \"'unpaired quotes\"'"
+	test_abbr_leading_space=" zsh_abbr_test"
+	test_abbr_trailing_space="zsh_abbr_test "
+	test_abbr_leading_and_trailing_space=" zsh_abbr_test "
 	test_abbr_expansion="zsh abbr test"
 	test_abbr_expansion_2="zsh abbr test 2"
 
